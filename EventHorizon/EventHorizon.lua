@@ -586,6 +586,35 @@ function spellbase:SPELL_UPDATE_COOLDOWN()
 		end
 		self.cooldown = nil
 	end
+
+	-- GCD indicator
+	
+	local gcdStart, gcdDuration = GetSpellCooldown(589)
+	if gcdStart and gcdDuration and gcdDuration>0 then
+		mainframe.gcd.gcdend = gcdStart + gcdDuration
+		mainframe:SetScript('OnUpdate', function (self, elapsed)
+			if mainframe.gcd.gcdend then
+				local now = GetTime()
+				if mainframe.gcd.gcdend <= now then
+					mainframe.gcd.gcdend = nil
+					mainframe.gcd:Hide()
+				else
+					local diff = now + past
+					local p = (mainframe.gcd.gcdend-diff)*scale
+					if p<=1 then
+						mainframe.gcd:SetPoint('RIGHT', self, 'RIGHT', (p-1)*width+1, 0)
+						mainframe.gcd:Show()
+					end
+				end
+			end
+		end)
+		mainframe.gcd:Show()
+	else
+		mainframe.gcd.gcdend = nil
+		mainframe.gcd:Hide()
+		mainframe:SetScript('OnUpdate', nil)
+	end
+	
 end
 
 --[[
@@ -706,20 +735,18 @@ function EventHorizon:Initialize()
 			debuff = 15,
 			dot = 3,
 		})
-		
 		self:NewSpell(10894, 'swp', {
 			debuff = 24,
 			dot = 3,
 			refreshable = true,
 		})
 		
-		if UnitRace("player") == "Undead" then
-			self:NewSpell(19280, 'dp', {
-				debuff = 24,
-				dot = 3,
-				cooldown = 180,
-			})
-		end
+
+		self:NewSpell(19280, 'dp', {
+			debuff = 24,
+			dot = 3,
+		})
+
 		
 		 self:NewSpell(8092, 'mb', {
 			cast = 1.5,
@@ -734,23 +761,12 @@ function EventHorizon:Initialize()
 			channeled = 3,
 			numhits = 3,
 		})
+
 		
-		self:NewSpell(34747, 'eye', {
-			buff = 10,
-		})
-		
-		self:NewSpell(32108, 'spellstrike', {
-			buff = 10,
-		})
-		
-		self:NewSpell(35163, 'icon', {
-			buff = 20,
-		})
-		
-		self:NewSpell(15286, 've', {
-			debuff = 60,
-			cooldown = 10,
-		})
+		-- self:NewSpell(15286, 've', {
+		-- 	debuff = 60,
+		-- 	cooldown = 10,
+		-- })
 
 	elseif class == "WARLOCK" then 
 		self:NewSpell(27217, 'mf', {
@@ -782,6 +798,32 @@ function EventHorizon:Initialize()
 			debuff = 24,
 			refreshable = true,
 		})
+	elseif class == "HUNTER" then
+		-- self:NewSpell(53434, 'call', {
+		-- 	cooldown = 300,
+		-- 	debuff = 	20,
+		-- })
+		-- self:NewSpell(64494, 'howl', {
+		-- 	cooldown = 40,
+		-- 	debuff = 20,
+		-- })
+		self:NewSpell(25295, 'serpent', {
+			dot = 3,
+			debuff = 15,
+			refreshable = true,
+		})
+		self:NewSpell(53209, 'chimera', {
+			cooldown = 10,
+		})
+		self:NewSpell(27065, 'aimed', {
+			cooldown = 10,
+		})
+		self:NewSpell(27019, 'arcane', {
+			cooldown = 6,
+		})
+		self:NewSpell(34120, 'steady', {
+			cast = 2
+		})
 	else
 		return
 	end
@@ -796,6 +838,18 @@ function EventHorizon:Initialize()
 	nowIndicator:SetPoint('TOPLEFT',mainframe,'TOPLEFT', -past/(future-past)*width, 0)
 	nowIndicator:SetWidth(1)
 	nowIndicator:SetColorTexture(1,1,1,1)
+
+	local gcdIndicator = mainframe:CreateTexture(nil, 'BORDER')
+
+	gcdIndicator:SetPoint('BOTTOM',mainframe,'BOTTOM')
+	gcdIndicator:SetPoint('TOP',mainframe,'TOP')
+	--gcdIndicator:SetPoint('TOPLEFT',mainframe,'TOPLEFT', 102, 0)
+	gcdIndicator:SetWidth(1)
+	gcdIndicator:SetColorTexture(0,1,0,1)
+	gcdIndicator.gcdend = 0
+	gcdIndicator:Hide()
+	mainframe.gcd = gcdIndicator
+
 
 	local handle = CreateFrame("Frame", "EventHorizonHandle", UIParent)
 	mainframe:SetPoint("TOPRIGHT", handle, "BOTTOMRIGHT")
